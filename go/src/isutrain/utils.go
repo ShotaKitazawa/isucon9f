@@ -53,14 +53,34 @@ func (train Train) getAvailableSeats(fromStation Station, toStation Station, sea
 
 	var err error
 
-	// 全ての座席を取得する
-	query := "SELECT * FROM seat_master WHERE train_class=? AND seat_class=? AND is_smoking_seat=?"
+	/*
+		// 全ての座席を取得する
+		query := "SELECT * FROM seat_master WHERE train_class=? AND seat_class=? AND is_smoking_seat=?"
+		seatList := []Seat{}
+		err = dbx.Select(&seatList, query, train.TrainClass, seatClass, isSmokingSeat)
+		if err != nil {
+			return nil, err
+		}
+	*/
 
-	seatList := []Seat{}
-	err = dbx.Select(&seatList, query, train.TrainClass, seatClass, isSmokingSeat)
-	if err != nil {
-		return nil, err
-	}
+	SeatListCacheMutex.Lock()
+	seatList := SeatListCache[fmt.Sprintf("%s_%s_%t", train.TrainClass, seatClass, isSmokingSeat)]
+	SeatListCacheMutex.Unlock()
+	/*
+		conn := pool.Get()
+		defer conn.Close()
+		data, err := redis.Bytes(conn.Do("GET", fmt.Sprintf("%s_%s_%t", train.TrainClass, seatClass, isSmokingSeat)))
+		if err != nil {
+			return nil, err
+		}
+		if data == nil {
+			return nil, err
+		}
+		var seatList []Seat
+		if err := json.Unmarshal(data, &seatList); err != nil {
+			return nil, err
+		}
+	*/
 
 	availableSeatMap := map[string]Seat{}
 	for _, seat := range seatList {
@@ -68,7 +88,7 @@ func (train Train) getAvailableSeats(fromStation Station, toStation Station, sea
 	}
 
 	// すでに取られている予約を取得する
-	query = `
+	query := `
 	SELECT sr.reservation_id, sr.car_number, sr.seat_row, sr.seat_column
 	FROM seat_reservations sr, reservations r, seat_master s, station_master std, station_master sta
 	WHERE
