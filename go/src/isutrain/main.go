@@ -1737,6 +1737,9 @@ func signUpHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	superSecurePassword := pbkdf2.Key([]byte(user.Password), salt, 100, 256, sha256.New)
 
+	if dbx == nil{
+		fmt.Println("nil")
+	}
 	_, err = dbx.Exec(
 		"INSERT INTO `users` (`email`, `salt`, `super_secure_password`) VALUES (?, ?, ?)",
 		user.Email,
@@ -1744,6 +1747,7 @@ func signUpHandler(w http.ResponseWriter, r *http.Request) {
 		superSecurePassword,
 	)
 	if err != nil {
+		fmt.Println(err)
 		errorResponse(w, http.StatusBadRequest, "user registration failed")
 		return
 	}
