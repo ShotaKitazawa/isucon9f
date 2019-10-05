@@ -2256,7 +2256,7 @@ func initCache() {
 	var stations []Station
 	query := "SELECT * FROM station_master"
 
-	err := dbx.Get(&stations, query)
+	err := dbx.Select(&stations, query)
 	if err != nil {
 		panic(err)
 	}
