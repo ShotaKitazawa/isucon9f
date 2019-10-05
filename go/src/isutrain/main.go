@@ -2298,7 +2298,8 @@ func init() {
 		Dial:        func() (redis.Conn, error) { return redis.Dial("tcp", redisHost) },
 	}
 
-	store, err = redistore.NewRediStore(10, "tcp", redisHost, "", []byte(secureRandomStr(20)))
+	//store, err = redistore.NewRediStore(10, "tcp", redisHost, "", []byte(secureRandomStr(20)))
+	store, err = redistore.NewRediStore(10, "tcp", redisHost, "", []byte("abc"))
 	if err != nil {
 		panic(err)
 	}
