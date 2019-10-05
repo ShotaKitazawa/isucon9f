@@ -2333,6 +2333,7 @@ func initCache() {
 	}
 
 	StationCache = make(map[string]Station, 100)
+	StationCacheByID = make(map[int]Station, 100)
 
 	var stations []Station
 	query := "SELECT * FROM station_master"
