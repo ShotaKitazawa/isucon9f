@@ -241,7 +241,7 @@ type AuthResponse struct {
 
 const (
 	sessionName   = "session_isutrain"
-	availableDays = 150
+	availableDays = 100
 )
 
 var (
