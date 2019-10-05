@@ -1,0 +1,13 @@
+[Unit]
+Description=ISUTRAIN (Language go) binary
+
+[Service]
+Type=simple
+ExecStart=/home/isucon/isutrain/webapp/go/isutrain
+
+Restart=always
+RestartSec=10s
+
+[Install]
+WantedBy=multi-user.target
+
