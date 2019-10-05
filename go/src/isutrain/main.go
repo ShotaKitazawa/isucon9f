@@ -276,6 +276,7 @@ func errorResponse(w http.ResponseWriter, errCode int, message string) {
 
 func getSession(r *http.Request) *sessions.Session {
 	session, _ := store.Get(r, sessionName)
+	fmt.Println(session)
 
 	return session
 }
