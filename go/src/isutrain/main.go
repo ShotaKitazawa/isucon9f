@@ -17,6 +17,7 @@ import (
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/gomodule/redigo/redis"
 	"github.com/gorilla/sessions"
 	"github.com/jmoiron/sqlx"
 	goji "goji.io"
@@ -28,6 +29,8 @@ import (
 var (
 	banner        = `ISUTRAIN API`
 	TrainClassMap = map[string]string{"express": "最速", "semi_express": "中間", "local": "遅いやつ"}
+
+	p *redis.Pool
 )
 
 var dbx *sqlx.DB
@@ -2112,6 +2115,36 @@ func dummyHandler(w http.ResponseWriter, r *http.Request) {
 func main() {
 	go http.ListenAndServe(":3000", nil)
 
+	// HTTP
+
+	mux := goji.NewMux()
+
+	mux.HandleFunc(pat.Post("/initialize"), initializeHandler)
+	mux.HandleFunc(pat.Get("/api/settings"), settingsHandler)
+
+	// 予約関係
+	mux.HandleFunc(pat.Get("/api/stations"), getStationsHandler)
+	mux.HandleFunc(pat.Get("/api/train/search"), trainSearchHandler)
+	mux.HandleFunc(pat.Get("/api/train/seats"), trainSeatsHandler)
+	mux.HandleFunc(pat.Post("/api/train/reserve"), trainReservationHandler)
+	mux.HandleFunc(pat.Post("/api/train/reservation/commit"), reservationPaymentHandler)
+
+	// 認証関連
+	mux.HandleFunc(pat.Get("/api/auth"), getAuthHandler)
+	mux.HandleFunc(pat.Post("/api/auth/signup"), signUpHandler)
+	mux.HandleFunc(pat.Post("/api/auth/login"), loginHandler)
+	mux.HandleFunc(pat.Post("/api/auth/logout"), logoutHandler)
+	mux.HandleFunc(pat.Get("/api/user/reservations"), userReservationsHandler)
+	mux.HandleFunc(pat.Get("/api/user/reservations/:item_id"), userReservationResponseHandler)
+	mux.HandleFunc(pat.Post("/api/user/reservations/:item_id/cancel"), userReservationCancelHandler)
+
+	fmt.Println(banner)
+	err := http.ListenAndServe(":8000", mux)
+
+	log.Fatal(err)
+}
+
+func init() {
 	// MySQL関連のお膳立て
 	var err error
 
@@ -2156,31 +2189,38 @@ func main() {
 	}
 	defer dbx.Close()
 
-	// HTTP
+	p = &redis.Pool{
+		MaxIdle:     3,
+		MaxActive:   0,
+		IdleTimeout: 240 * time.Second,
+		Dial:        func() (redis.Conn, error) { return redis.Dial("tcp", "192.168.34.209") },
+	}
 
-	mux := goji.NewMux()
-
-	mux.HandleFunc(pat.Post("/initialize"), initializeHandler)
-	mux.HandleFunc(pat.Get("/api/settings"), settingsHandler)
-
-	// 予約関係
-	mux.HandleFunc(pat.Get("/api/stations"), getStationsHandler)
-	mux.HandleFunc(pat.Get("/api/train/search"), trainSearchHandler)
-	mux.HandleFunc(pat.Get("/api/train/seats"), trainSeatsHandler)
-	mux.HandleFunc(pat.Post("/api/train/reserve"), trainReservationHandler)
-	mux.HandleFunc(pat.Post("/api/train/reservation/commit"), reservationPaymentHandler)
-
-	// 認証関連
-	mux.HandleFunc(pat.Get("/api/auth"), getAuthHandler)
-	mux.HandleFunc(pat.Post("/api/auth/signup"), signUpHandler)
-	mux.HandleFunc(pat.Post("/api/auth/login"), loginHandler)
-	mux.HandleFunc(pat.Post("/api/auth/logout"), logoutHandler)
-	mux.HandleFunc(pat.Get("/api/user/reservations"), userReservationsHandler)
-	mux.HandleFunc(pat.Get("/api/user/reservations/:item_id"), userReservationResponseHandler)
-	mux.HandleFunc(pat.Post("/api/user/reservations/:item_id/cancel"), userReservationCancelHandler)
-
-	fmt.Println(banner)
-	err = http.ListenAndServe(":8000", mux)
-
-	log.Fatal(err)
+	initCache()
 }
+
+func initCache() {
+
+	SeatCache = make(map[string][]Seat, 100)
+
+	for _, val_train := range []string{"遅いやつ", "中間", "最速"} {
+		for _, val_seat := range []string{"premium", "reserved", "non-reserved"} {
+			for _, val_smoking := range []bool{false, true} {
+
+				// 全ての座席を取得する
+				query := "SELECT * FROM seat_master WHERE train_class=? AND seat_class=? AND is_smoking_seat=?"
+				seatList := []Seat{}
+
+				err := dbx.Select(&seatList, query)
+				if err != nil {
+					panic(err)
+				}
+
+				SeatCache[fmt.Sprintf("%s_%s_%t", val_train, val_seat, val_smoking)] = seatList
+			}
+		}
+	}
+
+}
+
+var SeatCache map[string][]Seat
