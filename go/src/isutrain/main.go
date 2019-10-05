@@ -356,27 +356,41 @@ func fareCalc(date time.Time, depStation int, destStation int, trainClass, seatC
 	//
 	var err error
 	var fromStation, toStation Station
+	var ok bool
 
-	query := "SELECT * FROM station_master WHERE id=?"
+	StationCacheByIDMutex.Lock()
+	fromStation, ok = StationCacheByID[depStation]
+	if !ok {
+		return 0, err
+	}
+	toStation, ok = StationCacheByID[destStation]
+	if !ok {
+		return 0, err
+	}
+	StationCacheByIDMutex.Unlock()
 
-	// From
-	err = dbx.Get(&fromStation, query, depStation)
-	if err == sql.ErrNoRows {
-		return 0, err
-	}
-	if err != nil {
-		return 0, err
-	}
+	/*
+		query := "SELECT * FROM station_master WHERE id=?"
 
-	// To
-	err = dbx.Get(&toStation, query, destStation)
-	if err == sql.ErrNoRows {
-		return 0, err
-	}
-	if err != nil {
-		log.Print(err)
-		return 0, err
-	}
+		// From
+		err = dbx.Get(&fromStation, query, depStation)
+		if err == sql.ErrNoRows {
+			return 0, err
+		}
+		if err != nil {
+			return 0, err
+		}
+
+		// To
+		err = dbx.Get(&toStation, query, destStation)
+		if err == sql.ErrNoRows {
+			return 0, err
+		}
+		if err != nil {
+			log.Print(err)
+			return 0, err
+		}
+	*/
 
 	fmt.Println("distance", math.Abs(toStation.Distance-fromStation.Distance))
 	distFare, err := getDistanceFare(math.Abs(toStation.Distance - fromStation.Distance))
@@ -387,7 +401,7 @@ func fareCalc(date time.Time, depStation int, destStation int, trainClass, seatC
 
 	// 期間・車両・座席クラス倍率
 	fareList := []Fare{}
-	query = "SELECT * FROM fare_master WHERE train_class=? AND seat_class=? ORDER BY start_date"
+	query := "SELECT * FROM fare_master WHERE train_class=? AND seat_class=? ORDER BY start_date"
 	err = dbx.Select(&fareList, query, trainClass, seatClass)
 	if err != nil {
 		return 0, err
@@ -465,39 +479,58 @@ func trainSearchHandler(w http.ResponseWriter, r *http.Request) {
 	child, _ := strconv.Atoi(r.URL.Query().Get("child"))
 
 	var fromStation, toStation Station
-	query := "SELECT * FROM station_master WHERE name=?"
+	var ok bool
 
-	// From
-	err = dbx.Get(&fromStation, query, fromName)
-	if err == sql.ErrNoRows {
+	StationCacheMutex.Lock()
+	fromStation, ok = StationCache[fromName]
+	if !ok {
 		log.Print("fromStation: no rows")
 		errorResponse(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	if err != nil {
-		errorResponse(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-
-	// To
-	err = dbx.Get(&toStation, query, toName)
-	if err == sql.ErrNoRows {
+	toStation, ok = StationCache[toName]
+	if !ok {
 		log.Print("toStation: no rows")
 		errorResponse(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	if err != nil {
-		log.Print(err)
-		errorResponse(w, http.StatusInternalServerError, err.Error())
-		return
-	}
+	StationCacheMutex.Unlock()
+
+	/*
+		query := "SELECT * FROM station_master WHERE name=?"
+
+		// From
+		err = dbx.Get(&fromStation, query, fromName)
+		if err == sql.ErrNoRows {
+			log.Print("fromStation: no rows")
+			errorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		if err != nil {
+			errorResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		// To
+		err = dbx.Get(&toStation, query, toName)
+		if err == sql.ErrNoRows {
+			log.Print("toStation: no rows")
+			errorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		if err != nil {
+			log.Print(err)
+			errorResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+	*/
 
 	isNobori := false
 	if fromStation.Distance > toStation.Distance {
 		isNobori = true
 	}
 
-	query = "SELECT * FROM station_master ORDER BY distance"
+	query := "SELECT * FROM station_master ORDER BY distance"
 	if isNobori {
 		// 上りだったら駅リストを逆にする
 		query += " DESC"
@@ -754,32 +787,51 @@ func trainSeatsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var fromStation, toStation Station
-	query = "SELECT * FROM station_master WHERE name=?"
+	var ok bool
 
-	// From
-	err = dbx.Get(&fromStation, query, fromName)
-	if err == sql.ErrNoRows {
+	StationCacheMutex.Lock()
+	fromStation, ok = StationCache[fromName]
+	if !ok {
 		log.Print("fromStation: no rows")
 		errorResponse(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	if err != nil {
-		errorResponse(w, http.StatusBadRequest, err.Error())
-		return
-	}
-
-	// To
-	err = dbx.Get(&toStation, query, toName)
-	if err == sql.ErrNoRows {
+	toStation, ok = StationCache[toName]
+	if !ok {
 		log.Print("toStation: no rows")
 		errorResponse(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	if err != nil {
-		log.Print(err)
-		errorResponse(w, http.StatusBadRequest, err.Error())
-		return
-	}
+	StationCacheMutex.Unlock()
+
+	/*
+		query = "SELECT * FROM station_master WHERE name=?"
+
+		// From
+		err = dbx.Get(&fromStation, query, fromName)
+		if err == sql.ErrNoRows {
+			log.Print("fromStation: no rows")
+			errorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		if err != nil {
+			errorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		// To
+		err = dbx.Get(&toStation, query, toName)
+		if err == sql.ErrNoRows {
+			log.Print("toStation: no rows")
+			errorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		if err != nil {
+			log.Print(err)
+			errorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+	*/
 
 	usableTrainClassList := getUsableTrainClassList(fromStation, toStation)
 	usable := false
@@ -1364,6 +1416,27 @@ func trainReservationHandler(w http.ResponseWriter, r *http.Request) {
 
 		// 予約情報の乗車区間の駅IDを求める
 		var reservedfromStation, reservedtoStation Station
+		/*
+			var ok bool
+
+			StationCacheMutex.Lock()
+			departureStation, ok = StationCache[reservation.Departure]
+			if !ok {
+				tx.Rollback()
+				errorResponse(w, http.StatusNotFound, "予約情報に記載された列車の乗車駅データがみつかりません")
+				log.Println(err.Error())
+				return
+			}
+			arrivalStation, ok = StationCache[reservation.Arrival]
+			if !ok {
+				tx.Rollback()
+				errorResponse(w, http.StatusNotFound, "予約情報に記載された列車の降車駅データがみつかりません")
+				log.Println(err.Error())
+				return
+			}
+			StationCacheMutex.Unlock()
+		*/
+
 		query = "SELECT * FROM station_master WHERE name=?"
 
 		// From
@@ -2260,6 +2333,7 @@ func initCache() {
 	}
 
 	StationCache = make(map[string]Station, 100)
+	StationCacheByID = make(map[int]Station, 100)
 
 	var stations []Station
 	query := "SELECT * FROM station_master"
@@ -2270,13 +2344,16 @@ func initCache() {
 	}
 	for _, station := range stations {
 		StationCache[station.Name] = station
+		StationCacheByID[station.ID] = station
 	}
 
 }
 
 var (
-	SeatListCache      map[string][]Seat
-	SeatListCacheMutex sync.Mutex
-	StationCache       map[string]Station
-	StationCacheMutex  sync.Mutex
+	SeatListCache         map[string][]Seat
+	SeatListCacheMutex    sync.Mutex
+	StationCache          map[string]Station
+	StationCacheMutex     sync.Mutex
+	StationCacheByID      map[int]Station
+	StationCacheByIDMutex sync.Mutex
 )
