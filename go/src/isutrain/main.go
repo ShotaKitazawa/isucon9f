@@ -634,24 +634,9 @@ func trainSearchHandler(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			premium_avail_seats, err := train.getAvailableSeats(fromStation, toStation, "premium", false)
+			premium_avail_seats, premium_smoke_avail_seats, reserved_avail_seats, reserved_smoke_avail_seats, err := train.getAvailableSeatsAll(fromStation,toStation)
 			if err != nil {
-				errorResponse(w, http.StatusBadRequest, err.Error())
-				return
-			}
-			premium_smoke_avail_seats, err := train.getAvailableSeats(fromStation, toStation, "premium", true)
-			if err != nil {
-				errorResponse(w, http.StatusBadRequest, err.Error())
-				return
-			}
-
-			reserved_avail_seats, err := train.getAvailableSeats(fromStation, toStation, "reserved", false)
-			if err != nil {
-				errorResponse(w, http.StatusBadRequest, err.Error())
-				return
-			}
-			reserved_smoke_avail_seats, err := train.getAvailableSeats(fromStation, toStation, "reserved", true)
-			if err != nil {
+				fmt.Println(err)
 				errorResponse(w, http.StatusBadRequest, err.Error())
 				return
 			}
