@@ -1416,58 +1416,58 @@ func trainReservationHandler(w http.ResponseWriter, r *http.Request) {
 
 		// 予約情報の乗車区間の駅IDを求める
 		var reservedfromStation, reservedtoStation Station
-		var ok bool
-
-		StationCacheMutex.Lock()
-		departureStation, ok = StationCache[reservation.Departure]
-		if !ok {
-			tx.Rollback()
-			errorResponse(w, http.StatusNotFound, "予約情報に記載された列車の乗車駅データがみつかりません")
-			log.Println(err.Error())
-			return
-		}
-		arrivalStation, ok = StationCache[reservation.Arrival]
-		if !ok {
-			tx.Rollback()
-			errorResponse(w, http.StatusNotFound, "予約情報に記載された列車の降車駅データがみつかりません")
-			log.Println(err.Error())
-			return
-		}
-		StationCacheMutex.Unlock()
-
 		/*
-			query = "SELECT * FROM station_master WHERE name=?"
+			var ok bool
 
-			// From
-			err = tx.Get(&reservedfromStation, query, reservation.Departure)
-			if err == sql.ErrNoRows {
+			StationCacheMutex.Lock()
+			departureStation, ok = StationCache[reservation.Departure]
+			if !ok {
 				tx.Rollback()
 				errorResponse(w, http.StatusNotFound, "予約情報に記載された列車の乗車駅データがみつかりません")
 				log.Println(err.Error())
 				return
 			}
-			if err != nil {
-				tx.Rollback()
-				errorResponse(w, http.StatusInternalServerError, "予約情報に記載された列車の乗車駅データの取得に失敗しました")
-				log.Println(err.Error())
-				return
-			}
-
-			// To
-			err = tx.Get(&reservedtoStation, query, reservation.Arrival)
-			if err == sql.ErrNoRows {
+			arrivalStation, ok = StationCache[reservation.Arrival]
+			if !ok {
 				tx.Rollback()
 				errorResponse(w, http.StatusNotFound, "予約情報に記載された列車の降車駅データがみつかりません")
 				log.Println(err.Error())
 				return
 			}
-			if err != nil {
-				tx.Rollback()
-				errorResponse(w, http.StatusInternalServerError, "予約情報に記載された列車の降車駅データの取得に失敗しました")
-				log.Println(err.Error())
-				return
-			}
+			StationCacheMutex.Unlock()
 		*/
+
+		query = "SELECT * FROM station_master WHERE name=?"
+
+		// From
+		err = tx.Get(&reservedfromStation, query, reservation.Departure)
+		if err == sql.ErrNoRows {
+			tx.Rollback()
+			errorResponse(w, http.StatusNotFound, "予約情報に記載された列車の乗車駅データがみつかりません")
+			log.Println(err.Error())
+			return
+		}
+		if err != nil {
+			tx.Rollback()
+			errorResponse(w, http.StatusInternalServerError, "予約情報に記載された列車の乗車駅データの取得に失敗しました")
+			log.Println(err.Error())
+			return
+		}
+
+		// To
+		err = tx.Get(&reservedtoStation, query, reservation.Arrival)
+		if err == sql.ErrNoRows {
+			tx.Rollback()
+			errorResponse(w, http.StatusNotFound, "予約情報に記載された列車の降車駅データがみつかりません")
+			log.Println(err.Error())
+			return
+		}
+		if err != nil {
+			tx.Rollback()
+			errorResponse(w, http.StatusInternalServerError, "予約情報に記載された列車の降車駅データの取得に失敗しました")
+			log.Println(err.Error())
+			return
+		}
 
 		// 予約の区間重複判定
 		secdup := false
