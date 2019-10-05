@@ -242,7 +242,7 @@ type AuthResponse struct {
 
 const (
 	sessionName   = "session_isutrain"
-	availableDays = 100
+	availableDays = 50
 )
 
 var (
@@ -634,7 +634,7 @@ func trainSearchHandler(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 
-			premium_avail_seats, premium_smoke_avail_seats, reserved_avail_seats, reserved_smoke_avail_seats, err := train.getAvailableSeatsAll(fromStation,toStation)
+			premium_avail_seats, premium_smoke_avail_seats, reserved_avail_seats, reserved_smoke_avail_seats, err := train.getAvailableSeatsAll(fromStation, toStation)
 			if err != nil {
 				fmt.Println(err)
 				errorResponse(w, http.StatusBadRequest, err.Error())
