@@ -2193,7 +2193,7 @@ func init() {
 		MaxIdle:     3,
 		MaxActive:   0,
 		IdleTimeout: 240 * time.Second,
-		Dial:        func() (redis.Conn, error) { return redis.Dial("tcp", "192.168.34.209") },
+		Dial:        func() (redis.Conn, error) { return redis.Dial("tcp", "192.168.34.209:6379") },
 	}
 
 	initCache()
