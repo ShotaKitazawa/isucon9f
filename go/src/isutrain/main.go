@@ -30,7 +30,7 @@ var (
 	banner        = `ISUTRAIN API`
 	TrainClassMap = map[string]string{"express": "最速", "semi_express": "中間", "local": "遅いやつ"}
 
-	p *redis.Pool
+	pool *redis.Pool
 )
 
 var dbx *sqlx.DB
@@ -2189,7 +2189,7 @@ func init() {
 	}
 	defer dbx.Close()
 
-	p = &redis.Pool{
+	pool = &redis.Pool{
 		MaxIdle:     3,
 		MaxActive:   0,
 		IdleTimeout: 240 * time.Second,
@@ -2216,7 +2216,18 @@ func initCache() {
 					panic(err)
 				}
 
-				SeatCache[fmt.Sprintf("%s_%s_%t", val_train, val_seat, val_smoking)] = seatList
+				//SeatCache[fmt.Sprintf("%s_%s_%t", val_train, val_seat, val_smoking)] = seatList
+				data, err := json.Marshal(&seatList)
+				if err != nil {
+					panic(err)
+				}
+				conn := pool.Get()
+				defer conn.Close()
+				_, err = conn.Do("SET", fmt.Sprintf("%s_%s_%t", val_train, val_seat, val_smoking), data)
+				if err != nil {
+					panic(err)
+				}
+
 			}
 		}
 	}
