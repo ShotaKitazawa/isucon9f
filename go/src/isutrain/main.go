@@ -844,16 +844,24 @@ WHERE
 			}
 
 			var departureStation, arrivalStation Station
-			query = "SELECT * FROM station_master WHERE name=?"
+			StationCacheMutex.Lock()
+			departureStation = StationCache[reservation.Departure]
+			arrivalStation = StationCache[reservation.Arrival]
+			StationCacheMutex.Unlock()
 
-			err = dbx.Get(&departureStation, query, reservation.Departure)
-			if err != nil {
-				panic(err)
-			}
-			err = dbx.Get(&arrivalStation, query, reservation.Arrival)
-			if err != nil {
-				panic(err)
-			}
+			/*
+				var departureStation, arrivalStation Station
+				query = "SELECT * FROM station_master WHERE name=?"
+
+				err = dbx.Get(&departureStation, query, reservation.Departure)
+				if err != nil {
+					panic(err)
+				}
+				err = dbx.Get(&arrivalStation, query, reservation.Arrival)
+				if err != nil {
+					panic(err)
+				}
+			*/
 
 			if train.IsNobori {
 				// 上り
