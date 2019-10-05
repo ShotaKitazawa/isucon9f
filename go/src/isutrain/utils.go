@@ -105,7 +105,11 @@ func (train Train)getAvailableSeatsAll(fromStation Station, toStation Station) (
 	for _, seatReservation := range seatReservationList {
 		key := fmt.Sprintf("%d_%d_%s", seatReservation.CarNumber, seatReservation.SeatRow, seatReservation.SeatColumn)
 		delete(availableSeatMapPremiumT, key)
+		delete(availableSeatMapPremiumF, key)
+		delete(availableSeatMapReservedT, key)
+		delete(availableSeatMapReservedF, key)
 	}
+	/*
 	for _, seatReservation := range seatReservationList {
 		key := fmt.Sprintf("%d_%d_%s", seatReservation.CarNumber, seatReservation.SeatRow, seatReservation.SeatColumn)
 		delete(availableSeatMapPremiumF, key)
@@ -118,6 +122,8 @@ func (train Train)getAvailableSeatsAll(fromStation Station, toStation Station) (
 		key := fmt.Sprintf("%d_%d_%s", seatReservation.CarNumber, seatReservation.SeatRow, seatReservation.SeatColumn)
 		delete(availableSeatMapReservedF, key)
 	}
+	*/
+
 
 	retPT := []Seat{}
 	retPF := []Seat{}
@@ -127,13 +133,13 @@ func (train Train)getAvailableSeatsAll(fromStation Station, toStation Station) (
 		retPT = append(retPT, seat)
 	}
 	for _, seat := range availableSeatMapPremiumF {
-		retPF = append(retPT, seat)
+		retPF = append(retPF, seat)
 	}
 	for _, seat := range availableSeatMapReservedT {
-		retRT = append(retPT, seat)
+		retRT = append(retRT, seat)
 	}
 	for _, seat := range availableSeatMapReservedF {
-		retRF = append(retPT, seat)
+		retRF = append(retRF, seat)
 	}
 	return retPT, retPF, retRT, retRF, nil
 }
