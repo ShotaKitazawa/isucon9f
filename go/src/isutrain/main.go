@@ -24,6 +24,7 @@ import (
 	goji "goji.io"
 	"goji.io/pat"
 	"golang.org/x/crypto/pbkdf2"
+	"gopkg.in/boj/redistore.v1"
 	// "sync"
 )
 
@@ -245,7 +246,8 @@ const (
 )
 
 var (
-	store sessions.Store = sessions.NewCookieStore([]byte(secureRandomStr(20)))
+	//store sessions.Store = sessions.NewCookieStore([]byte(secureRandomStr(20)))
+	store sessions.Store
 )
 
 func handler(w http.ResponseWriter, r *http.Request) {
@@ -2284,11 +2286,21 @@ func init() {
 		log.Fatalf("failed to connect to DB: %s.", err.Error())
 	}
 
+	redisHost := os.Getenv("REDIS_HOST")
+	if redisHost == "" {
+		redisHost = "192.168.34.209:6379"
+	}
+
 	pool = &redis.Pool{
 		MaxIdle:     3,
 		MaxActive:   0,
 		IdleTimeout: 240 * time.Second,
-		Dial:        func() (redis.Conn, error) { return redis.Dial("tcp", "192.168.34.209:6379") },
+		Dial:        func() (redis.Conn, error) { return redis.Dial("tcp", redisHost) },
+	}
+
+	store, err = redistore.NewRediStore(10, "tcp", redisHost, "", []byte(secureRandomStr(20)))
+	if err != nil {
+		panic(err)
 	}
 
 	initCache()
