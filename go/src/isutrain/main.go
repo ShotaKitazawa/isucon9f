@@ -1307,9 +1307,7 @@ func trainReservationHandler(w http.ResponseWriter, r *http.Request) {
 					break
 				}
 			}
-			fmt.Printf("空き実績: %d号車 シート:%v 席数:%d\n", carnum, req.Seats, len(req.Seats))
 			if len(req.Seats) >= req.Adult+req.Child {
-				fmt.Println("予約情報に追加したよ")
 				req.Seats = req.Seats[:req.Adult+req.Child]
 				req.CarNumber = carnum
 				break
@@ -1537,7 +1535,6 @@ func trainReservationHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	sumFare := (req.Adult * fare) + (req.Child*fare)/2
-	fmt.Println("SUMFARE")
 
 	// userID取得。ログインしてないと怒られる。
 	user, errCode, errMsg := getUser(r)
@@ -2037,7 +2034,6 @@ func userReservationCancelHandler(w http.ResponseWriter, r *http.Request) {
 	reservation := Reservation{}
 	query := "SELECT * FROM reservations WHERE reservation_id=? AND user_id=?"
 	err = tx.Get(&reservation, query, itemID, user.ID)
-	fmt.Println("CANCEL", reservation, itemID, user.ID)
 	if err == sql.ErrNoRows {
 		tx.Rollback()
 		errorResponse(w, http.StatusBadRequest, "reservations naiyo")
