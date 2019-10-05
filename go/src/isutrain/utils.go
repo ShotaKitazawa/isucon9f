@@ -105,8 +105,17 @@ func (train Train)getAvailableSeatsAll(fromStation Station, toStation Station) (
 	for _, seatReservation := range seatReservationList {
 		key := fmt.Sprintf("%d_%d_%s", seatReservation.CarNumber, seatReservation.SeatRow, seatReservation.SeatColumn)
 		delete(availableSeatMapPremiumT, key)
+	}
+	for _, seatReservation := range seatReservationList {
+		key := fmt.Sprintf("%d_%d_%s", seatReservation.CarNumber, seatReservation.SeatRow, seatReservation.SeatColumn)
 		delete(availableSeatMapPremiumF, key)
+	}
+	for _, seatReservation := range seatReservationList {
+		key := fmt.Sprintf("%d_%d_%s", seatReservation.CarNumber, seatReservation.SeatRow, seatReservation.SeatColumn)
 		delete(availableSeatMapReservedT, key)
+	}
+	for _, seatReservation := range seatReservationList {
+		key := fmt.Sprintf("%d_%d_%s", seatReservation.CarNumber, seatReservation.SeatRow, seatReservation.SeatColumn)
 		delete(availableSeatMapReservedF, key)
 	}
 
