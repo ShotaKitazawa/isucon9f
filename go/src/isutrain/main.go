@@ -241,7 +241,7 @@ type AuthResponse struct {
 
 const (
 	sessionName   = "session_isutrain"
-	availableDays = 10
+	availableDays = 100
 )
 
 var (
@@ -2095,6 +2095,9 @@ func initializeHandler(w http.ResponseWriter, r *http.Request) {
 		availableDays,
 		"golang",
 	}
+
+	initCache()
+
 	w.Header().Set("Content-Type", "application/json;charset=utf-8")
 	json.NewEncoder(w).Encode(resp)
 }
