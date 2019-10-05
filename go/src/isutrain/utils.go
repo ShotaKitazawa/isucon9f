@@ -141,7 +141,7 @@ func (train Train)getAvailableSeatsAll(fromStation Station, toStation Station) (
 	for _, seat := range availableSeatMapReservedF {
 		retRF = append(retRF, seat)
 	}
-	return retPT, retPF, retRT, retRF, nil
+	return retPF, retPT, retRF, retRT, nil
 }
 
 
