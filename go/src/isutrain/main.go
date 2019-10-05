@@ -2211,7 +2211,7 @@ func initCache() {
 				query := "SELECT * FROM seat_master WHERE train_class=? AND seat_class=? AND is_smoking_seat=?"
 				seatList := []Seat{}
 
-				err := dbx.Select(&seatList, query)
+				err := dbx.Select(&seatList, query, val_train, val_seat, val_smoking)
 				if err != nil {
 					panic(err)
 				}
