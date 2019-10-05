@@ -1,11 +1,8 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"time"
-
-	"github.com/gomodule/redigo/redis"
 )
 
 func checkAvailableDate(date time.Time) bool {
@@ -65,21 +62,25 @@ func (train Train) getAvailableSeats(fromStation Station, toStation Station, sea
 			return nil, err
 		}
 	*/
-	conn := pool.Get()
-	defer conn.Close()
 
-	//seatList := SeatCache[fmt.Sprintf("%s_%s_%t", train.TrainClass, seatClass, isSmokingSeat)]
-	data, err := redis.Bytes(conn.Do("GET", fmt.Sprintf("%s_%s_%t", train.TrainClass, seatClass, isSmokingSeat)))
-	if err != nil {
-		return nil, err
-	}
-	if data == nil {
-		return nil, err
-	}
-	var seatList []Seat
-	if err := json.Unmarshal(data, &seatList); err != nil {
-		return nil, err
-	}
+	SeatListCacheMutex.Lock()
+	seatList := SeatListCache[fmt.Sprintf("%s_%s_%t", train.TrainClass, seatClass, isSmokingSeat)]
+	SeatListCacheMutex.Unlock()
+	/*
+		conn := pool.Get()
+		defer conn.Close()
+		data, err := redis.Bytes(conn.Do("GET", fmt.Sprintf("%s_%s_%t", train.TrainClass, seatClass, isSmokingSeat)))
+		if err != nil {
+			return nil, err
+		}
+		if data == nil {
+			return nil, err
+		}
+		var seatList []Seat
+		if err := json.Unmarshal(data, &seatList); err != nil {
+			return nil, err
+		}
+	*/
 
 	availableSeatMap := map[string]Seat{}
 	for _, seat := range seatList {

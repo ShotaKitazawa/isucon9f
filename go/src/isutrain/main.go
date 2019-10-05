@@ -14,6 +14,7 @@ import (
 	_ "net/http/pprof"
 	"os"
 	"strconv"
+	"sync"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -1737,7 +1738,7 @@ func signUpHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	superSecurePassword := pbkdf2.Key([]byte(user.Password), salt, 100, 256, sha256.New)
 
-	if dbx == nil{
+	if dbx == nil {
 		fmt.Println("nil")
 	}
 	_, err = dbx.Exec(
@@ -2205,13 +2206,12 @@ func init() {
 
 func initCache() {
 
-	SeatCache = make(map[string][]Seat, 100)
+	SeatListCache = make(map[string][]Seat, 100)
 
 	for _, val_train := range []string{"遅いやつ", "中間", "最速"} {
 		for _, val_seat := range []string{"premium", "reserved", "non-reserved"} {
 			for _, val_smoking := range []bool{false, true} {
 
-				fmt.Sprintf("%s_%s_%t", val_train, val_seat, val_smoking)
 				// 全ての座席を取得する
 				query := "SELECT * FROM seat_master WHERE train_class=? AND seat_class=? AND is_smoking_seat=?"
 				seatList := []Seat{}
@@ -2221,17 +2221,21 @@ func initCache() {
 					panic(err)
 				}
 
-				//SeatCache[fmt.Sprintf("%s_%s_%t", val_train, val_seat, val_smoking)] = seatList
-				data, err := json.Marshal(&seatList)
-				if err != nil {
-					panic(err)
-				}
-				conn := pool.Get()
-				defer conn.Close()
-				_, err = conn.Do("SET", fmt.Sprintf("%s_%s_%t", val_train, val_seat, val_smoking), data)
-				if err != nil {
-					panic(err)
-				}
+				SeatListCacheMutex.Lock()
+				SeatListCache[fmt.Sprintf("%s_%s_%t", val_train, val_seat, val_smoking)] = seatList
+				SeatListCacheMutex.Unlock()
+				/*
+					data, err := json.Marshal(&seatList)
+					if err != nil {
+						panic(err)
+					}
+					conn := pool.Get()
+					defer conn.Close()
+					_, err = conn.Do("SET", fmt.Sprintf("%s_%s_%t", val_train, val_seat, val_smoking), data)
+					if err != nil {
+						panic(err)
+					}
+				*/
 
 			}
 		}
@@ -2239,4 +2243,5 @@ func initCache() {
 
 }
 
-var SeatCache map[string][]Seat
+var SeatListCache map[string][]Seat
+var SeatListCacheMutex sync.Mutex
