@@ -610,6 +610,7 @@ func trainSearchHandler(w http.ResponseWriter, r *http.Request) {
 
 			premium_avail_seats, premium_smoke_avail_seats, reserved_avail_seats, reserved_smoke_avail_seats, err := train.getAvailableSeatsAll(fromStation,toStation)
 			if err != nil {
+				fmt.Println(err)
 				errorResponse(w, http.StatusBadRequest, err.Error())
 				return
 			}
