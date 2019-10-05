@@ -5,7 +5,7 @@ services:
   webapp:
     build: ./go
     volumes:
-      - ./go:/go/src/webapp
+      - ./go/src/isutrain:/go/src/webapp
     env_file:
       - ".env"
     environment:

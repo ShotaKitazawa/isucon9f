@@ -1,8 +1,6 @@
-FROM golang:1.12
+FROM alpine:latest
 
-RUN apt-get update && apt-get -y install mariadb-client
-
-ENV GO111MODULE=on
+RUN apk audate && apk add mysql-client
 
 WORKDIR /go/src/webapp
-CMD ["go", "run", "main.go", "utils.go"]
+CMD ["./isutrain"]

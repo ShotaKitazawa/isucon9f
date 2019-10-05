@@ -11,6 +11,7 @@ import (
 	"log"
 	"math"
 	"net/http"
+	_ "net/http/pprof"
 	"os"
 	"strconv"
 	"time"
@@ -2109,6 +2110,8 @@ func dummyHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	go http.ListenAndServe(":3000", nil)
+
 	// MySQL関連のお膳立て
 	var err error
 
