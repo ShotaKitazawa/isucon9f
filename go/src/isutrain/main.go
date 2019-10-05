@@ -2196,6 +2196,7 @@ func init() {
 	}
 
 	initCache()
+	fmt.Println("finish initCache")
 }
 
 func initCache() {
@@ -2206,6 +2207,7 @@ func initCache() {
 		for _, val_seat := range []string{"premium", "reserved", "non-reserved"} {
 			for _, val_smoking := range []bool{false, true} {
 
+				fmt.Sprintf("%s_%s_%t", val_train, val_seat, val_smoking)
 				// 全ての座席を取得する
 				query := "SELECT * FROM seat_master WHERE train_class=? AND seat_class=? AND is_smoking_seat=?"
 				seatList := []Seat{}
