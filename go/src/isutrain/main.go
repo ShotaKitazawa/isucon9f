@@ -1180,18 +1180,25 @@ func trainReservationHandler(w http.ResponseWriter, r *http.Request) {
 					}
 
 					var departureStation, arrivalStation Station
-					query = "SELECT * FROM station_master WHERE name=?"
+					StationCacheMutex.Lock()
+					departureStation = StationCache[reservation.Departure]
+					arrivalStation = StationCache[reservation.Arrival]
+					StationCacheMutex.Unlock()
 
-					err = dbx.Get(&departureStation, query, reservation.Departure)
-					if err != nil {
-						tx.Rollback()
-						panic(err)
-					}
-					err = dbx.Get(&arrivalStation, query, reservation.Arrival)
-					if err != nil {
-						tx.Rollback()
-						panic(err)
-					}
+					/*
+						query = "SELECT * FROM station_master WHERE name=?"
+
+						err = dbx.Get(&departureStation, query, reservation.Departure)
+						if err != nil {
+							tx.Rollback()
+							panic(err)
+						}
+						err = dbx.Get(&arrivalStation, query, reservation.Arrival)
+						if err != nil {
+							tx.Rollback()
+							panic(err)
+						}
+					*/
 
 					if train.IsNobori {
 						// 上り
@@ -2244,7 +2251,24 @@ func initCache() {
 		}
 	}
 
+	StationCache = make(map[string]Station, 100)
+
+	var stations []Station
+	query := "SELECT * FROM station_master"
+
+	err := dbx.Select(&stations, query)
+	if err != nil {
+		panic(err)
+	}
+	for _, station := range stations {
+		StationCache[station.Name] = station
+	}
+
 }
 
-var SeatListCache map[string][]Seat
-var SeatListCacheMutex sync.Mutex
+var (
+	SeatListCache      map[string][]Seat
+	SeatListCacheMutex sync.Mutex
+	StationCache       map[string]Station
+	StationCacheMutex  sync.Mutex
+)
