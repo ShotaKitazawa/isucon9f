@@ -2187,7 +2187,6 @@ func init() {
 	if err != nil {
 		log.Fatalf("failed to connect to DB: %s.", err.Error())
 	}
-	defer dbx.Close()
 
 	pool = &redis.Pool{
 		MaxIdle:     3,
